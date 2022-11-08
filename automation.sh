@@ -31,4 +31,22 @@ fi
 cd /tmp/
 tar -cvf ${myname}-httpd-logs-${timestamp}.tar /var/log/apache2/*.log
 aws s3 cp /tmp/${myname}-httpd-logs-${timestamp}.tar s3://${s3bucket}/${myname}-httpd-logs-${timestamp}.tar
+mysize=$(du -k "${myname}-httpd-logs-${timestamp}.tar"| cut -f1 )
+echo "Debug: $mysize    "
+path_html=/var/www/html/inventory.html
+if [ -e "$path_html" ]
+ then
+    echo "Debug: File already present"
+else
+printf "Log Type                Date Created            Type            Size\n" > ${path_html}
+fi
+printf "httpd-logs              ${timestamp}            tar             ${mysize}K\n" >> ${path_html}
 cd -
+CRON_FILE="/etc/cron.d/automation"
+if [ ! -f $CRON_FILE ]
+then
+echo "cron file for root does not exist, creating.."
+touch $CRON_FILE
+crontab $CRON_FILE
+echo "0 0 * * * root /root/Automation_Project/automation.sh" >> $CRON_FILE
+fi
